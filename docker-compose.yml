@@ -1,0 +1,39 @@
+start-data:
+  image: busybox
+  volumes:
+    - /var/lib/start
+postgres-osm:
+  image: openfirmware/postgres-osm
+osm2pgsql:
+  image: vincentds1/osm2pgsql
+  links:
+    - postgres-osm:pg
+  volumes: 
+    - ~/osm:/osm
+  volumes_from:
+    - start-data
+  command: /etc/start.sh
+shapefiles:
+  image: vincentds1/shapefiles
+osm-bright:
+  image: vincentds1/osm-bright
+  volumes_from:
+    - start-data
+    - shapefiles
+  links:
+    - postgres-osm:pg
+tiles-data:
+  image: busybox
+  volumes:
+    - /var/lib/tiles
+renderd:
+  image: vincentds1/renderd
+  volumes_from:
+    - start-data
+    - osm-bright
+    - tiles-data
+  ports:
+    - "80:80"
+  links:
+    - postgres-osm:pg
+  command: /etc/start.sh
